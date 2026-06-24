@@ -11,3 +11,5 @@ struct systemEventMessage {
     uint64_t timestamp_nanoseconds;
     char event_code;
 };
+
+#pragma pack(pop)
