@@ -1,7 +1,8 @@
+#include <stdio.h>
+
 #include <cstring>
 #include <fstream>
 #include <iostream>
-#include <stdio.h>
 #include <string>
 #include <vector>
 
@@ -17,10 +18,10 @@ class Reader {
     }
     */
 
-  public:
+   public:
     Reader(std::string file_name) { file.open(file_name, std::ios::binary); }
 
-    std::vector<char> bufferMessage() {
+    auto bufferMessage() -> std::vector<char> {
         file.seekg(0, std::ios::end);
         auto size = file.tellg();
         file.seekg(0, std::ios::beg);
