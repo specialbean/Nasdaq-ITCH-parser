@@ -13,7 +13,12 @@ auto msgToFormat(const char* buf, size_t& offset) -> T {
     T res;
     std::memcpy(&res, buf + offset, sizeof(T));
     offset += sizeof(T);
-    return res;
+
+    if constexpr (std::is_integral_v<T> && sizeof(T) > 1) {
+        return std::byteswap(res);
+    } else {
+        return res;
+    }
 }
 
 auto msgStringToFormat(const char* buf, size_t& offset, char* res, uint16_t string_length) -> void {
@@ -21,17 +26,29 @@ auto msgStringToFormat(const char* buf, size_t& offset, char* res, uint16_t stri
     offset += string_length;
 }
 
+auto msgTimestamp(const char* buf, size_t& offset) -> uint64_t {
+    uint16_t upper {};
+    uint32_t lower {};
+    std::memcpy(&upper, buf + offset, sizeof(upper));
+    offset += sizeof(upper);
+    std::memcpy(&lower, buf + offset, sizeof(lower));
+    offset += sizeof(lower);
+    upper = std::byteswap(upper);
+    lower = std::byteswap(lower);
+    return static_cast<uint64_t>(upper) << 32 | lower;
+}
+
 auto formatMessage(systemEventMessage& msg, const char* buf, size_t& offset) -> void {
     msg.stock_locate          = msgToFormat<uint16_t>(buf, offset);
     msg.tracking_number       = msgToFormat<uint16_t>(buf, offset);
-    msg.timestamp_nanoseconds = msgToFormat<uint64_t>(buf, offset);
+    msg.timestamp_nanoseconds = msgTimestamp(buf, offset);
     msg.event_code            = msgToFormat<char>(buf, offset);
 }
 
 auto formatMessage(stockDirectoryMessage& msg, const char* buf, size_t& offset) -> void {
     msg.stock_locate          = msgToFormat<uint16_t>(buf, offset);
     msg.tracking_number       = msgToFormat<uint16_t>(buf, offset);
-    msg.timestamp_nanoseconds = msgToFormat<uint64_t>(buf, offset);
+    msg.timestamp_nanoseconds = msgTimestamp(buf, offset);
 
     msgStringToFormat(buf, offset, msg.stock, STOCK_LENGTH);
     msg.market_category            = msgToFormat<char>(buf, offset);
@@ -53,7 +70,7 @@ auto formatMessage(stockDirectoryMessage& msg, const char* buf, size_t& offset) 
 auto formatMessage(stockTradingActionMessage& msg, const char* buf, size_t& offset) -> void {
     msg.stock_locate          = msgToFormat<uint16_t>(buf, offset);
     msg.tracking_number       = msgToFormat<uint16_t>(buf, offset);
-    msg.timestamp_nanoseconds = msgToFormat<uint64_t>(buf, offset);
+    msg.timestamp_nanoseconds = msgTimestamp(buf, offset);
 
     msgStringToFormat(buf, offset, msg.stock, STOCK_LENGTH);
     msg.trading_state = msgToFormat<char>(buf, offset);
@@ -65,7 +82,7 @@ auto formatMessage(stockTradingActionMessage& msg, const char* buf, size_t& offs
 auto formatMessage(regSHOMessage& msg, const char* buf, size_t& offset) -> void {
     msg.stock_locate          = msgToFormat<uint16_t>(buf, offset);
     msg.tracking_number       = msgToFormat<uint16_t>(buf, offset);
-    msg.timestamp_nanoseconds = msgToFormat<uint64_t>(buf, offset);
+    msg.timestamp_nanoseconds = msgTimestamp(buf, offset);
 
     msgStringToFormat(buf, offset, msg.stock, STOCK_LENGTH);
     msg.reg_sho_action = msgToFormat<char>(buf, offset);
@@ -75,7 +92,7 @@ auto formatMessage(marketParticipationPositionMessage& msg, const char* buf, siz
     -> void {
     msg.stock_locate          = msgToFormat<uint16_t>(buf, offset);
     msg.tracking_number       = msgToFormat<uint16_t>(buf, offset);
-    msg.timestamp_nanoseconds = msgToFormat<uint64_t>(buf, offset);
+    msg.timestamp_nanoseconds = msgTimestamp(buf, offset);
 
     msgStringToFormat(buf, offset, msg.MPID, 4);
     msgStringToFormat(buf, offset, msg.stock, STOCK_LENGTH);
@@ -87,7 +104,7 @@ auto formatMessage(marketParticipationPositionMessage& msg, const char* buf, siz
 auto formatMessage(mwcbDeclineLevelMessage& msg, const char* buf, size_t& offset) -> void {
     msg.stock_locate          = msgToFormat<uint16_t>(buf, offset);
     msg.tracking_number       = msgToFormat<uint16_t>(buf, offset);
-    msg.timestamp_nanoseconds = msgToFormat<uint64_t>(buf, offset);
+    msg.timestamp_nanoseconds = msgTimestamp(buf, offset);
     msg.level_1               = msgToFormat<uint64_t>(buf, offset);
     msg.level_2               = msgToFormat<uint64_t>(buf, offset);
     msg.level_3               = msgToFormat<uint64_t>(buf, offset);
@@ -96,14 +113,14 @@ auto formatMessage(mwcbDeclineLevelMessage& msg, const char* buf, size_t& offset
 auto formatMessage(mwcbStatusMessage& msg, const char* buf, size_t& offset) -> void {
     msg.stock_locate          = msgToFormat<uint16_t>(buf, offset);
     msg.tracking_number       = msgToFormat<uint16_t>(buf, offset);
-    msg.timestamp_nanoseconds = msgToFormat<uint64_t>(buf, offset);
+    msg.timestamp_nanoseconds = msgTimestamp(buf, offset);
     msg.breached_level        = msgToFormat<char>(buf, offset);
 }
 
 auto formatMessage(ipoQuotingPeriodUpdate& msg, const char* buf, size_t& offset) -> void {
     msg.stock_locate          = msgToFormat<uint16_t>(buf, offset);
     msg.tracking_number       = msgToFormat<uint16_t>(buf, offset);
-    msg.timestamp_nanoseconds = msgToFormat<uint64_t>(buf, offset);
+    msg.timestamp_nanoseconds = msgTimestamp(buf, offset);
 
     msgStringToFormat(buf, offset, msg.stock, STOCK_LENGTH);
     msg.ipo_quotation_release_time      = msgToFormat<uint32_t>(buf, offset);
@@ -114,7 +131,7 @@ auto formatMessage(ipoQuotingPeriodUpdate& msg, const char* buf, size_t& offset)
 auto formatMessage(luldAuctionCollarMessage& msg, const char* buf, size_t& offset) -> void {
     msg.stock_locate          = msgToFormat<uint16_t>(buf, offset);
     msg.tracking_number       = msgToFormat<uint16_t>(buf, offset);
-    msg.timestamp_nanoseconds = msgToFormat<uint64_t>(buf, offset);
+    msg.timestamp_nanoseconds = msgTimestamp(buf, offset);
 
     msgStringToFormat(buf, offset, msg.stock, STOCK_LENGTH);
     msg.auction_collar_reference_price = msgToFormat<uint32_t>(buf, offset);
@@ -126,7 +143,7 @@ auto formatMessage(luldAuctionCollarMessage& msg, const char* buf, size_t& offse
 auto formatMessage(operationalHaltMessage& msg, const char* buf, size_t& offset) -> void {
     msg.stock_locate          = msgToFormat<uint16_t>(buf, offset);
     msg.tracking_number       = msgToFormat<uint16_t>(buf, offset);
-    msg.timestamp_nanoseconds = msgToFormat<uint64_t>(buf, offset);
+    msg.timestamp_nanoseconds = msgTimestamp(buf, offset);
 
     msgStringToFormat(buf, offset, msg.stock, STOCK_LENGTH);
     msg.market_code           = msgToFormat<char>(buf, offset);
@@ -165,6 +182,7 @@ auto formatMessage(orderExecutedMessage& msg, const char* buf, size_t& offset) -
     msg.executed_shares        = msgToFormat<uint32_t>(buf, offset);
     msg.match_number           = msgToFormat<uint64_t>(buf, offset);
 }
+
 auto formatMessage(orderExecutedWithPriceMessage& msg, const char* buf, size_t& offset) -> void {
     msg.stock_locate           = msgToFormat<uint16_t>(buf, offset);
     msg.tracking_number        = msgToFormat<uint16_t>(buf, offset);
@@ -217,7 +235,7 @@ auto formatMessage(tradeMessage& msg, const char* buf, size_t& offset) -> void {
 auto formatMessage(crossTradeMessage& msg, const char* buf, size_t& offset) -> void {
     msg.stock_locate          = msgToFormat<uint16_t>(buf, offset);
     msg.tracking_number       = msgToFormat<uint16_t>(buf, offset);
-    msg.timestamp_nanoseconds = msgToFormat<uint64_t>(buf, offset);
+    msg.timestamp_nanoseconds = msgTimestamp(buf, offset);
     msg.shares                = msgToFormat<uint64_t>(buf, offset);
 
     msgStringToFormat(buf, offset, msg.stock, STOCK_LENGTH);
@@ -229,14 +247,14 @@ auto formatMessage(crossTradeMessage& msg, const char* buf, size_t& offset) -> v
 auto formatMessage(brokenTradeMessage& msg, const char* buf, size_t& offset) -> void {
     msg.stock_locate          = msgToFormat<uint16_t>(buf, offset);
     msg.tracking_number       = msgToFormat<uint16_t>(buf, offset);
-    msg.timestamp_nanoseconds = msgToFormat<uint64_t>(buf, offset);
+    msg.timestamp_nanoseconds = msgTimestamp(buf, offset);
     msg.match_number          = msgToFormat<uint64_t>(buf, offset);
 }
 
 auto formatMessage(NOIIMessage& msg, const char* buf, size_t& offset) -> void {
     msg.stock_locate          = msgToFormat<uint16_t>(buf, offset);
     msg.tracking_number       = msgToFormat<uint16_t>(buf, offset);
-    msg.timestamp_nanoseconds = msgToFormat<uint64_t>(buf, offset);
+    msg.timestamp_nanoseconds = msgTimestamp(buf, offset);
     msg.paired_shares         = msgToFormat<uint64_t>(buf, offset);
     msg.imbalance_shares      = msgToFormat<uint64_t>(buf, offset);
     msg.imbalance_direction   = msgToFormat<char>(buf, offset);
@@ -252,7 +270,7 @@ auto formatMessage(NOIIMessage& msg, const char* buf, size_t& offset) -> void {
 auto formatMessage(RPIIMessage& msg, const char* buf, size_t& offset) -> void {
     msg.stock_locate          = msgToFormat<uint16_t>(buf, offset);
     msg.tracking_number       = msgToFormat<uint16_t>(buf, offset);
-    msg.timestamp_nanoseconds = msgToFormat<uint64_t>(buf, offset);
+    msg.timestamp_nanoseconds = msgTimestamp(buf, offset);
 
     msgStringToFormat(buf, offset, msg.stock, STOCK_LENGTH);
     msg.interesting_flag = msgToFormat<char>(buf, offset);
@@ -261,7 +279,7 @@ auto formatMessage(RPIIMessage& msg, const char* buf, size_t& offset) -> void {
 auto formatMessage(DLCRPDMessage& msg, const char* buf, size_t& offset) -> void {
     msg.stock_locate          = msgToFormat<uint16_t>(buf, offset);
     msg.tracking_number       = msgToFormat<uint16_t>(buf, offset);
-    msg.timestamp_nanoseconds = msgToFormat<uint64_t>(buf, offset);
+    msg.timestamp_nanoseconds = msgTimestamp(buf, offset);
 
     msgStringToFormat(buf, offset, msg.stock, STOCK_LENGTH);
     msg.open_eligibility_status  = msgToFormat<char>(buf, offset);
@@ -354,16 +372,19 @@ auto parse(const char* buf, std::size_t& offset) -> void {
 
     auto handOff = msgTypeId.find(message_type);
     std::cout << "Executed successfully" << '\n' << '\n';
+    offset += msg_size - 1;
 }
 
 int main() {
-    auto* testingReader = new Reader("../tests/t_SystemEventMessage.itch");
+    auto* testingReader = new Reader("~/Downloads/sample.bin");
 
     auto        buf {testingReader->bufferMessage()};
-    std::size_t off {};
+    std::size_t off {0};
 
-    parse(buf.data(), off);
-
+    while (off < buf.size()) {
+        parse(buf.data(), off);
+        std::cout << "Current offset is: " << off << '\n' << '\n';
+    }
     // std::cout << parse(buf.data(), off) << '\n';
 
     // systemEventMessage temp{};

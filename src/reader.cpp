@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -19,7 +17,7 @@ class Reader {
     */
 
    public:
-    Reader(std::string file_name) { file.open(file_name, std::ios::binary); }
+    explicit Reader(const std::string& file_name) { file.open(file_name, std::ios::binary); }
 
     auto bufferMessage() -> std::vector<char> {
         file.seekg(0, std::ios::end);
