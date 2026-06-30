@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <variant>
 
 #pragma pack(push, 1)
 
@@ -265,5 +266,30 @@ struct DLCRPDMessage {
     uint32_t lower_price_range_collar;
     uint32_t upper_price_range_collar;
 };
+
+using Message = std::variant<
+    systemEventMessage,
+    stockDirectoryMessage,
+    stockTradingActionMessage,
+    regSHOMessage,
+    marketParticipationPositionMessage,
+    mwcbDeclineLevelMessage,
+    mwcbStatusMessage,
+    ipoQuotingPeriodUpdate,
+    luldAuctionCollarMessage,
+    operationalHaltMessage,
+    addOrderMessage,
+    addOrderWithMPIDMessage,
+    orderExecutedMessage,
+    orderExecutedWithPriceMessage,
+    orderCancleMessage,
+    orderDeleteMessage,
+    orderReplaceMessage,
+    tradeMessage,
+    crossTradeMessage,
+    brokenTradeMessage,
+    NOIIMessage,
+    RPIIMessage,
+    DLCRPDMessage>;
 
 #pragma pack(pop)

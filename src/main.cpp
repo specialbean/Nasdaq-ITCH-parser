@@ -1,9 +1,7 @@
 #include <cstdint>
 #include <cstring>
 #include <functional>
-#include <string>
 #include <unordered_map>
-#include <variant>
 
 #include "includes/messages.hpp"
 #include "reader.cpp"
@@ -152,7 +150,7 @@ auto formatMessage(operationalHaltMessage& msg, const char* buf, size_t& offset)
 auto formatMessage(addOrderMessage& msg, const char* buf, size_t& offset) -> void {
     msg.stock_locate           = msgToFormat<uint16_t>(buf, offset);
     msg.tracking_number        = msgToFormat<uint16_t>(buf, offset);
-    msg.timestamp_nanoseconds  = msgToFormat<uint64_t>(buf, offset);
+    msg.timestamp_nanoseconds  = msgTimestamp(buf, offset);
     msg.order_reference_number = msgToFormat<uint64_t>(buf, offset);
     msg.buy_sell_indicator     = msgToFormat<char>(buf, offset);
     msg.shares                 = msgToFormat<uint32_t>(buf, offset);
@@ -164,7 +162,7 @@ auto formatMessage(addOrderMessage& msg, const char* buf, size_t& offset) -> voi
 auto formatMessage(addOrderWithMPIDMessage& msg, const char* buf, size_t& offset) -> void {
     msg.stock_locate           = msgToFormat<uint16_t>(buf, offset);
     msg.tracking_number        = msgToFormat<uint16_t>(buf, offset);
-    msg.timestamp_nanoseconds  = msgToFormat<uint64_t>(buf, offset);
+    msg.timestamp_nanoseconds  = msgTimestamp(buf, offset);
     msg.order_reference_number = msgToFormat<uint64_t>(buf, offset);
     msg.buy_sell_indicator     = msgToFormat<char>(buf, offset);
     msg.shares                 = msgToFormat<uint32_t>(buf, offset);
@@ -177,7 +175,7 @@ auto formatMessage(addOrderWithMPIDMessage& msg, const char* buf, size_t& offset
 auto formatMessage(orderExecutedMessage& msg, const char* buf, size_t& offset) -> void {
     msg.stock_locate           = msgToFormat<uint16_t>(buf, offset);
     msg.tracking_number        = msgToFormat<uint16_t>(buf, offset);
-    msg.timestamp_nanoseconds  = msgToFormat<uint64_t>(buf, offset);
+    msg.timestamp_nanoseconds  = msgTimestamp(buf, offset);
     msg.order_reference_number = msgToFormat<uint64_t>(buf, offset);
     msg.executed_shares        = msgToFormat<uint32_t>(buf, offset);
     msg.match_number           = msgToFormat<uint64_t>(buf, offset);
@@ -186,7 +184,7 @@ auto formatMessage(orderExecutedMessage& msg, const char* buf, size_t& offset) -
 auto formatMessage(orderExecutedWithPriceMessage& msg, const char* buf, size_t& offset) -> void {
     msg.stock_locate           = msgToFormat<uint16_t>(buf, offset);
     msg.tracking_number        = msgToFormat<uint16_t>(buf, offset);
-    msg.timestamp_nanoseconds  = msgToFormat<uint64_t>(buf, offset);
+    msg.timestamp_nanoseconds  = msgTimestamp(buf, offset);
     msg.order_reference_number = msgToFormat<uint64_t>(buf, offset);
     msg.executed_shares        = msgToFormat<uint32_t>(buf, offset);
     msg.match_number           = msgToFormat<uint64_t>(buf, offset);
@@ -197,7 +195,7 @@ auto formatMessage(orderExecutedWithPriceMessage& msg, const char* buf, size_t& 
 auto formatMessage(orderCancleMessage& msg, const char* buf, size_t& offset) -> void {
     msg.stock_locate           = msgToFormat<uint16_t>(buf, offset);
     msg.tracking_number        = msgToFormat<uint16_t>(buf, offset);
-    msg.timestamp_nanoseconds  = msgToFormat<uint64_t>(buf, offset);
+    msg.timestamp_nanoseconds  = msgTimestamp(buf, offset);
     msg.order_reference_number = msgToFormat<uint64_t>(buf, offset);
     msg.cancelled_shares       = msgToFormat<uint32_t>(buf, offset);
 }
@@ -205,14 +203,14 @@ auto formatMessage(orderCancleMessage& msg, const char* buf, size_t& offset) -> 
 auto formatMessage(orderDeleteMessage& msg, const char* buf, size_t& offset) -> void {
     msg.stock_locate           = msgToFormat<uint16_t>(buf, offset);
     msg.tracking_number        = msgToFormat<uint16_t>(buf, offset);
-    msg.timestamp_nanoseconds  = msgToFormat<uint64_t>(buf, offset);
+    msg.timestamp_nanoseconds  = msgTimestamp(buf, offset);
     msg.order_reference_number = msgToFormat<uint64_t>(buf, offset);
 }
 
 auto formatMessage(orderReplaceMessage& msg, const char* buf, size_t& offset) -> void {
     msg.stock_locate                    = msgToFormat<uint16_t>(buf, offset);
     msg.tracking_number                 = msgToFormat<uint16_t>(buf, offset);
-    msg.timestamp_nanoseconds           = msgToFormat<uint64_t>(buf, offset);
+    msg.timestamp_nanoseconds           = msgTimestamp(buf, offset);
     msg.original_order_reference_number = msgToFormat<uint64_t>(buf, offset);
     msg.new_order_reference_number      = msgToFormat<uint64_t>(buf, offset);
     msg.shares                          = msgToFormat<uint32_t>(buf, offset);
@@ -222,7 +220,7 @@ auto formatMessage(orderReplaceMessage& msg, const char* buf, size_t& offset) ->
 auto formatMessage(tradeMessage& msg, const char* buf, size_t& offset) -> void {
     msg.stock_locate           = msgToFormat<uint16_t>(buf, offset);
     msg.tracking_number        = msgToFormat<uint16_t>(buf, offset);
-    msg.timestamp_nanoseconds  = msgToFormat<uint64_t>(buf, offset);
+    msg.timestamp_nanoseconds  = msgTimestamp(buf, offset);
     msg.order_reference_number = msgToFormat<uint64_t>(buf, offset);
     msg.buy_sell_indicator     = msgToFormat<char>(buf, offset);
     msg.shares                 = msgToFormat<uint32_t>(buf, offset);
@@ -292,31 +290,6 @@ auto formatMessage(DLCRPDMessage& msg, const char* buf, size_t& offset) -> void 
 }
 // Parsing
 
-using Message = std::variant<
-    systemEventMessage,
-    stockDirectoryMessage,
-    stockTradingActionMessage,
-    regSHOMessage,
-    marketParticipationPositionMessage,
-    mwcbDeclineLevelMessage,
-    mwcbStatusMessage,
-    ipoQuotingPeriodUpdate,
-    luldAuctionCollarMessage,
-    operationalHaltMessage,
-    addOrderMessage,
-    addOrderWithMPIDMessage,
-    orderExecutedMessage,
-    orderExecutedWithPriceMessage,
-    orderCancleMessage,
-    orderDeleteMessage,
-    orderReplaceMessage,
-    tradeMessage,
-    crossTradeMessage,
-    brokenTradeMessage,
-    NOIIMessage,
-    RPIIMessage,
-    DLCRPDMessage>;
-
 using msgHandler = std::function<Message(const char*)>;
 
 std::unordered_map<char, msgHandler> msgTypeId;
@@ -375,8 +348,9 @@ auto parse(const char* buf, std::size_t& offset) -> void {
     offset += msg_size - 1;
 }
 
+/*
 int main() {
-    auto* testingReader = new Reader("~/Downloads/sample.bin");
+    auto* testingReader = new Reader("/home/benji/Downloads/sample.bin");
 
     auto        buf {testingReader->bufferMessage()};
     std::size_t off {0};
@@ -393,3 +367,4 @@ int main() {
 
     // std::cout << temp.message_type << '\n';
 }
+*/

@@ -1,3 +1,4 @@
+#include <cstdio>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -17,11 +18,17 @@ class Reader {
     */
 
    public:
-    explicit Reader(const std::string& file_name) { file.open(file_name, std::ios::binary); }
+    explicit Reader(const std::string& file_name) {
+        file.open(file_name, std::ios::binary);
+        if (!file.is_open()) {
+            std::cout << "failed to open: " << file_name << '\n';
+        }
+    }
 
     auto bufferMessage() -> std::vector<char> {
         file.seekg(0, std::ios::end);
         auto size = file.tellg();
+        std::cout << "File end pointer: " << size << '\n';
         file.seekg(0, std::ios::beg);
 
         std::vector<char> buf(static_cast<size_t>(size));
